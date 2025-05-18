@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>NurChat</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.min.js"></script>
+  <style>
+    body {
+      background-color: #101010;
+      color: #f0f0f0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+
+    h1 {
+      font-size: 3em;
+      color: #FFFFFF;
+      margin-bottom: 0;
+    }
+
+    h3 {
+      font-weight: 300;
+      color: #aaa;
+      margin-bottom: 30px;
+    }
+
+    #chatContainer {
+      width: 90%;
+      max-width: 600px;
+      background-color: #bdbdbdbe;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 0 15px #40ff4e22;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .message {
+      padding: 10px 15px;
+      border-radius: 15px;
+      max-width: 80%;
+      word-wrap: break-word;
+      box-shadow: 0 0 10px #00000033;
+    }
+
+    .user {
+      align-self: flex-end;
+      background-color: #a7a7a7be;
+      color: black;
+    }
+
+    .bot {
+      align-self: flex-start;
+      background-color: #2a2a2a;
+    }
+
+    #inputArea {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      width: 90%;
+      max-width: 600px;
+    }
+
+    textarea {
+      flex: 1;
+      border: none;
+      border-radius: 15px;
+      padding: 10px;
+      font-size: 1em;
+      resize: none;
+      height: 60px;
+      font-family: Arial, sans-serif;
+      box-shadow: 0 0 10px #40ff4e33;
+      background-color: #ededed;
+      color: #000000;
+    }
+
+    button {
+      background-color: #ffffffbe;
+      color: black;
+      border: none;
+      border-radius: 15px;
+      font-size: 1.1em;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>NurChat</h1>
+  <h3 id="subtitle">NurChat — your new friend!</h3>
+
+  <div id="chatContainer"></div>
+
+  <div id="inputArea">
+    <textarea id="userInput" placeholder="Type a message..."></textarea>
+    <button onclick="handleMessage()">Send</button>
+  </div>
+
+  <script>
+      alert('NurChat is new chatbot! NurChat know only Kazakh language. English and Russian soon...')
+    let responses = {};
+
+    fetch("responses.json")
+      .then(res => res.json())
+      .then(data => {
+        responses = data;
+      });
+
+    const chatContainer = document.getElementById('chatContainer');
+    const subtitle = document.getElementById('subtitle');
+
+    function handleMessage() {
+      const input = document.getElementById('userInput');
+      const text = input.value.trim();
+      if (text === '') return;
+
+      addMessage(text, 'user');
+
+      setTimeout(() => {
+        const reply = generateFakeAIResponse(text);
+        addMessage(reply, 'bot');
+      }, 400);
+
+      input.value = '';
+      subtitle.style.opacity = '0';
+      setTimeout(() => {
+        subtitle.style.display = 'none';
+      }, 500);
+    }
+
+    function addMessage(message, sender) {
+      const msg = document.createElement('div');
+      msg.classList.add('message', sender);
+      msg.textContent = message;
+      chatContainer.appendChild(msg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function generateFakeAIResponse(text) {
+      const lower = text.toLowerCase();
+
+      let expr = lower
+        .replace(/қосу/g, "+")
+        .replace(/алу/g, "-")
+        .replace(/көбейту|×/g, "*")
+        .replace(/бөлу|÷/g, "/")
+        .replace(/қанша|нәтижесі|тең|=|\?/g, "")
+        .replace(/квадрат түбір\s*(\d+)/g, "sqrt($1)")
+        .replace(/,/g, ".")
+        .trim();
+
+      try {
+        const result = math.evaluate(expr);
+        if (typeof result === 'number' || typeof result === 'bigint') {
+          return `Нәтиже: ${result}`;
+        }
+      } catch (err) {}
+
+      const found = Object.keys(responses).filter(key => lower.includes(key));
+      if (found.length > 0) {
+        return found.map(k => responses[k]).join("\n");
+      }
+
+      return "Мен оны нақты білмеймін, немесе бұл сөз кітапханада жоқ";
+    }
+  </script>
+
+</body>
+</html>
